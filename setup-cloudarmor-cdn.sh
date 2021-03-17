@@ -40,20 +40,27 @@ gcloud compute security-policies create apigee-cloudarmor-demo \
 # gcloud alpha compute security-policies update apigee-cloudarmor-demo \
 # 	--enable-ml
 
-echo "Creating security rule to allow traffic from $yourIP..."
+echo "Updating default security rule to block all traffic..."
+gcloud compute security-policies rules update 2147483647 \
+	--security-policy apigee-cloudarmor-demo \
+	--description "block all traffic" \
+	--src-ip-ranges "*" \
+	--action "deny-403"
+
+echo "Creating security rule to prevent SQL injection attacks..."
 gcloud compute security-policies rules create 1000 \
+    --security-policy apigee-cloudarmor-demo \
+    --expression "evaluatePreconfiguredExpr('sqli-stable')" \
+    --action "deny-403"
+
+echo "Creating security rule to allow traffic from $yourIP..."
+gcloud compute security-policies rules create 1001 \
     --security-policy apigee-cloudarmor-demo \
     --description "allow traffic from $yourIP" \
     --src-ip-ranges  "${yourIP}/32" \
     --action "allow"
 
-echo "Creating security rule to prevent SQL injection attacks..."
-gcloud compute security-policies rules create 1001 \
-    --security-policy apigee-cloudarmor-demo \
-    --expression "evaluatePreconfiguredExpr('sqli-stable')" \
-    --action "deny-403"
-
-echo "Applying security policy to target backend apigee-proxy-backend..."
+echo "Applying security policy to target backend $apigeeBackend..."
 gcloud compute backend-services update $apigeeBackend \
     --security-policy apigee-cloudarmor-demo --global
 
