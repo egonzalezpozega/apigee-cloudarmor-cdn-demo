@@ -33,8 +33,8 @@ gcloud compute security-policies create apigee-cloudarmor-demo \
     --description "block bad traffic" \
 
 # echo "Enabling adaptive protection..."
-gcloud alpha compute security-policies update apigee-cloudarmor-demo \
-	--enable-layer7-ddos-defense
+# gcloud alpha compute security-policies update apigee-cloudarmor-demo \
+# 	--enable-layer7-ddos-defense
 
 # echo "Enabling adaptive protection..."
 # gcloud alpha compute security-policies update apigee-cloudarmor-demo \
