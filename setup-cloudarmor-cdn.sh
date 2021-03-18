@@ -14,13 +14,20 @@
 # limitations under the License.
 
 project=$1
-apigeeBackend="apigee-proxy-backend"
 
 if [ -z "$1" ]
   then
     echo "Usage: Please provide the project ID where you have deployed Apigee and you would like to configure Cloud Armor."
     exit 1
 fi
+
+if [ -z "$2" ]
+  then
+    apigeeBackend="apigee-proxy-backend"
+  else
+    apigeeBackend=$2
+fi
+
 
 yourIP=$(curl -s "ifconfig.me")
 echo "Project ID: " $project
@@ -31,14 +38,6 @@ gcloud config set project $project
 echo "Creating security policy apigee-cloudarmor-demo..."
 gcloud compute security-policies create apigee-cloudarmor-demo \
     --description "block bad traffic" \
-
-# echo "Enabling adaptive protection..."
-# gcloud alpha compute security-policies update apigee-cloudarmor-demo \
-# 	--enable-layer7-ddos-defense
-
-# echo "Enabling adaptive protection..."
-# gcloud alpha compute security-policies update apigee-cloudarmor-demo \
-# 	--enable-ml
 
 echo "Updating default security rule to block all traffic..."
 gcloud compute security-policies rules update 2147483647 \
