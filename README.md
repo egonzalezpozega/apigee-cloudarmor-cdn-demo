@@ -19,7 +19,7 @@ The Apigee service when provisioned on GCP is by default only available as a pri
 Run the script providing the GCP Project ID where your Apigee org lives as an argument.
 
 ```bash
-./setup-cloudarmor-cdn.sh <your_project_id> <your_destination_directory>
+./setup-cloudarmor-cdn.sh <your_project_id>
 ```
 
 The script assumes you have followed the steps on [Git](https://github.com/egonzalezpozega/apigee-network-bridge) to setup the external loadbalancer with the backend name "apigee-proxy-backend". If you used a different backend name, feel free to pass it to the script as a second parameter.
