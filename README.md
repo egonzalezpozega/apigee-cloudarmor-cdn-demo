@@ -16,16 +16,21 @@ The Apigee service when provisioned on GCP is by default only available as a pri
 
 ## How to use
 
-Run the script providing the GCP Project ID where your Apigee org lives as an argument. The script assumes you have followed the steps on [Git](https://github.com/egonzalezpozega/apigee-network-bridge) to setup the external loadbalancer with the backend name "apigee-proxy-backend". If you used a different backend name, feel free to modify the script variable apigeeBackend.
+Run the script providing the GCP Project ID where your Apigee org lives as an argument.
 
 ```bash
-./setup-cloudarmor-cdn.sh $PROJECT_ID
+./setup-cloudarmor-cdn.sh <your_project_id> <your_destination_directory>
+```
+
+The script assumes you have followed the steps on [Git](https://github.com/egonzalezpozega/apigee-network-bridge) to setup the external loadbalancer with the backend name "apigee-proxy-backend". If you used a different backend name, feel free to pass it to the script as a second parameter.
+
+```bash
+./setup-cloudarmor-cdn.sh <your_project_id> <your_apigee_backend>
 ```
 
 This will create a sample security-policy in Cloud Armor called apigee-cloudarmor-demo and will add 2 rules to it:
 * A rule to only allow traffic from your public IP. (It uses the service ifconfig.me)
 * A rule with a predefined expression to prevent SQL injection attacks.
-
 
 
 ## Verify that the setup worked
@@ -59,7 +64,6 @@ Sample SQL injection query:
 ```bash
 curl -v 'https://{yourapiproxyurl}/helloworld?param=delete%20*%20from%20users;'
 ```
-
 
 ___
 
