@@ -28,43 +28,60 @@ if [ -z "$2" ]
     apigeeBackend=$2
 fi
 
-
 yourIP=$(curl -s "ifconfig.me")
 echo "Project ID: " $project
 echo "Your public IP: " $yourIP
 
 gcloud config set project $project
 
-echo "Creating security policy apigee-cloudarmor-demo..."
-gcloud compute security-policies create apigee-cloudarmor-demo \
-    --description "block bad traffic" \
+existingPolicy=$(gcloud compute security-policies list | grep 'apigee-cloudarmor-demo' | awk '{print $1}')
 
-echo "Updating default security rule to block all traffic..."
-gcloud compute security-policies rules update 2147483647 \
-	--security-policy apigee-cloudarmor-demo \
-	--description "block all traffic" \
-	--src-ip-ranges "*" \
-	--action "deny-403"
+if [ -z "$existingPolicy" ]; then
 
-echo "Creating security rule to prevent SQL injection attacks..."
-gcloud compute security-policies rules create 1000 \
-    --security-policy apigee-cloudarmor-demo \
-    --expression "evaluatePreconfiguredExpr('sqli-stable')" \
-    --action "deny-403"
+    echo "Creating security policy apigee-cloudarmor-demo..."
+    gcloud compute security-policies create apigee-cloudarmor-demo \
+        --description "block bad traffic" \
 
-echo "Creating security rule to allow traffic from $yourIP..."
-gcloud compute security-policies rules create 1001 \
+    echo "Updating default security rule to block all traffic..."
+    gcloud compute security-policies rules update 2147483647 \
+    	--security-policy apigee-cloudarmor-demo \
+    	--description "block all traffic" \
+    	--src-ip-ranges "*" \
+    	--action "deny-403"
+
+    echo "Creating security rule to prevent SQL injection attacks..."
+    gcloud compute security-policies rules create 1000 \
+        --security-policy apigee-cloudarmor-demo \
+        --expression "evaluatePreconfiguredExpr('sqli-stable')" \
+        --action "deny-403"
+
+    echo "Creating security rule to allow traffic from $yourIP..."
+      gcloud compute security-policies rules create 1001 \
+        --security-policy apigee-cloudarmor-demo \
+        --description "allow traffic from $yourIP" \
+        --src-ip-ranges  "${yourIP}/32" \
+        --action "allow"
+
+    echo "Applying security policy to target backend $apigeeBackend..."
+    gcloud compute backend-services update $apigeeBackend \
+        --security-policy apigee-cloudarmor-demo --global
+
+    echo "Adding Apigee backend as origin to Cloud CDN..."
+    gcloud compute backend-services update $apigeeBackend \
+        --enable-cdn \
+        --cache-mode="USE_ORIGIN_HEADERS" \
+        --global
+
+  RESULT=$?
+  if [ $RESULT -ne 0 ]; then
+    echo "Failed to create security rule to allow traffic from your IP..."
+    exit 1
+  fi
+else
+  echo "A security rule to allow traffic from your IP already exists...updating rule to your current IP $yourIP ..."
+  gcloud compute security-policies rules update 1001 \
     --security-policy apigee-cloudarmor-demo \
     --description "allow traffic from $yourIP" \
     --src-ip-ranges  "${yourIP}/32" \
     --action "allow"
-
-echo "Applying security policy to target backend $apigeeBackend..."
-gcloud compute backend-services update $apigeeBackend \
-    --security-policy apigee-cloudarmor-demo --global
-
-echo "Adding Apigee backend as origin to Cloud CDN..."
-gcloud compute backend-services update $apigeeBackend \
-    --enable-cdn \
-    --cache-mode="USE_ORIGIN_HEADERS" \
-    --global
+fi
